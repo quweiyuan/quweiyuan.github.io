@@ -1,0 +1,514 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Springboot整合篇——Redis（二） | 趣味源</title><meta name="keywords" content="NoSQL,Springboot"><meta name="author" content="Yao"><meta name="copyright" content="Yao"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="上节我们对Springboot和Redis做了一个大概的整合，已经实现了基本的Curd操作，本节我们来看看Redis序列化细节。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Springboot整合篇——Redis（二）">
+<meta property="og:url" content="https://quweiyuan.github.io/2019/09/20/Springboot%E6%95%B4%E5%90%88%E7%AF%87%E2%80%94%E2%80%94Redis%EF%BC%88%E4%BA%8C%EF%BC%89/index.html">
+<meta property="og:site_name" content="趣味源">
+<meta property="og:description" content="上节我们对Springboot和Redis做了一个大概的整合，已经实现了基本的Curd操作，本节我们来看看Redis序列化细节。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://quweiyuan.github.io/images/redis-xuliehua.png">
+<meta property="article:published_time" content="2019-09-20T12:57:38.000Z">
+<meta property="article:modified_time" content="2021-06-18T03:30:38.044Z">
+<meta property="article:author" content="Yao">
+<meta property="article:tag" content="NoSQL">
+<meta property="article:tag" content="Springboot">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://quweiyuan.github.io/images/redis-xuliehua.png"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://quweiyuan.github.io/2019/09/20/Springboot%E6%95%B4%E5%90%88%E7%AF%87%E2%80%94%E2%80%94Redis%EF%BC%88%E4%BA%8C%EF%BC%89/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//fonts.googleapis.com" crossorigin=""/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Titillium+Web&amp;display=swap" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":500},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":50,"languages":{"author":"作者: Yao","link":"链接: ","source":"来源: 趣味源","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-right"},
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isanchor: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Springboot整合篇——Redis（二）',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: undefined,
+  isToc: true,
+  postUpdate: '2021-06-18 11:30:38'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if (GLOBAL_CONFIG_SITE.isHome && /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    document.addEventListener('pjax:complete', detectApple)})(window)</script><meta name="generator" content="Hexo 5.4.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/uploads/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">20</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">14</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">17</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('/images/redis-xuliehua.png')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">趣味源</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Springboot整合篇——Redis（二）</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2019-09-20T12:57:38.000Z" title="发表于 2019-09-20 20:57:38">2019-09-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-06-18T03:30:38.044Z" title="更新于 2021-06-18 11:30:38">2021-06-18</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/NoSQL/">NoSQL</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/NoSQL/Springboot/">Springboot</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">1.7k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>7分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Springboot整合篇——Redis（二）"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><p>上节我们对Springboot和Redis做了一个大概的整合，已经实现了基本的Curd操作，本节我们来看看Redis序列化细节。</p>
+<span id="more"></span>
+<h1>Redis序列化</h1>
+<p>高能预警： 为了<s>尽量把序列化说的清楚一些</s>（瓜保熟），所以会有一些源码，还请大家耐心吃瓜。</p>
+<h2 id="RedisSerializer">RedisSerializer</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">public interface RedisSerializer&lt;T&gt; &#123;</span><br><span class="line">    @Nullable</span><br><span class="line">    byte[] serialize(@Nullable T var1) throws SerializationException;</span><br><span class="line"></span><br><span class="line">    @Nullable</span><br><span class="line">    T deserialize(@Nullable byte[] var1) throws SerializationException;</span><br><span class="line"></span><br><span class="line">    static RedisSerializer&lt;Object&gt; java() &#123;</span><br><span class="line">        return java((ClassLoader)null);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    static RedisSerializer&lt;Object&gt; java(@Nullable ClassLoader classLoader) &#123;</span><br><span class="line">        return new JdkSerializationRedisSerializer(classLoader);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    static RedisSerializer&lt;Object&gt; json() &#123;</span><br><span class="line">        return new GenericJackson2JsonRedisSerializer();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    static RedisSerializer&lt;String&gt; string() &#123;</span><br><span class="line">        return StringRedisSerializer.UTF_8;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    static RedisSerializer&lt;byte[]&gt; byteArray() &#123;</span><br><span class="line">        return ByteArrayRedisSerializer.INSTANCE;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    default boolean canSerialize(Class&lt;?&gt; type) &#123;</span><br><span class="line">        return ClassUtils.isAssignable(this.getTargetType(), type);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    default Class&lt;?&gt; getTargetType() &#123;</span><br><span class="line">        return Object.class;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>
+<p><code>deserialize()</code> 和 <code>serialize()</code> 定义了对象 <T> 和二进制数组的转换:</p>
+<p>看到这个，不禁有些疑问。我们在终端，看到的不都是字符串么，怎么这里是序列化成二进制数组呢？实际上，Redis Client 传递给 Redis Server 是传递的 KEY 和 VALUE 都是二进制值数组。<br>
+下面我们来考证一下。</p>
+<p>从 Jedis 的Connection类中sendCommand(ProtocolCommand cmd, byte[]… args)方法中可以求证，传入的参数就是二进制数组，而 cmd 命令也会被序列化成二进制数组。</p>
+<p><img src="/images/xuliehua.png" alt="序列化"></p>
+</li>
+</ul>
+<p>RedisSerializer 的实现类主要有以下几种：</p>
+<p><img src="/images/redis-xuliehua.png" alt="RedisSerializer实现"></p>
+<p>主要分成五类：</p>
+<h3 id="JDK-序列化方式">JDK 序列化方式</h3>
+<h4 id="JdkSerializationRedisSerializer">JdkSerializationRedisSerializer:</h4>
+<p>RedisTemplate默认序列化。<br>
+优点：<br>
+1. 通用性强<br>
+2. 反序列化时不需要提供类型信息(class)<br>
+缺点：<br>
+1. 序列化速度慢<br>
+2. 序列化占用内存大<br>
+3. 序列化对象必须实现Serializable接口<br>
+4. 可读性差</p>
+<p><img src="/images/keduxing.png" alt="可读性差"></p>
+<h3 id="String-序列化方式">String 序列化方式</h3>
+<h4 id="StringRedisSerializer">StringRedisSerializer:</h4>
+<p>StringRedisTemplate默认序列化。<br>
+优点：<br>
+1. 可读性强<br>
+2. 不需要转换<br>
+缺点：<br>
+1. 只能对字符串序列化<br>
+2. 不能对对象序列化</p>
+<h4 id="GenericToStringSerializer">GenericToStringSerializer:</h4>
+<p>同StringRedisSerializer一样，但它可以将任何对象泛化为字符串并序列化。(基本不会去使用)</p>
+<h3 id="JSON-序列化方式">JSON 序列化方式</h3>
+<h4 id="Jackson2JsonRedisSerializer">Jackson2JsonRedisSerializer:</h4>
+<p>使用Jackson库将对象序列化为JSON字符串。<br>
+优点：<br>
+1. 速度快<br>
+2. 序列化后的字符串短小精悍<br>
+3. 不需要实现Serializable接口<br>
+缺点：<br>
+1. 必须提供要序列化对象的类型信息(.class对象)</p>
+<h4 id="FastJsonRedisSerializer">FastJsonRedisSerializer:</h4>
+<p>由阿里巴巴FastJson包提供<br>
+优点：<br>
+1. 速度快<br>
+2. 兼容性强<br>
+3. 占用内存小<br>
+缺点：未知</p>
+<h4 id="GenericFastJsonRedisSerializer">GenericFastJsonRedisSerializer:</h4>
+<p>同FastJsonRedisSerializer类似</p>
+<h4 id="GenericJackson2JsonRedisSerializer">GenericJackson2JsonRedisSerializer:</h4>
+<p>底层使用Jackson进行序列化并存入Redis。<br>
+优点：<br>
+1. 对于普通类型(如数值类型，字符串)可以正常反序列化回相应对象<br>
+缺点：<br>
+1. 存入对象时由于没有存入类信息，则无法反序列化</p>
+<h3 id="XML-序列化方式">XML 序列化方式</h3>
+<h4 id="OxmSerializer">OxmSerializer:</h4>
+<p>以xml格式存储（但还是String类型），解析起来比较为复杂。<br>
+缺点:<br>
+1. 速度慢<br>
+2. 占用空间大</p>
+<h3 id="ByteArray-序列化方式">ByteArray 序列化方式</h3>
+<h4 id="ByteArrayRedisSerializer">ByteArrayRedisSerializer:</h4>
+<p>Byte数组序列化</p>
+<hr>
+<h2 id="动手实践">动手实践</h2>
+<h3 id="创建-RedisConfiguration-配置类">创建 RedisConfiguration 配置类</h3>
+<p>我们来创建一个 RedisConfiguration 类，代码如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">@Configuration</span><br><span class="line">public class RedisConfiguration &#123;</span><br><span class="line"></span><br><span class="line">    @Bean</span><br><span class="line">    public RedisTemplate&lt;String, Object&gt; redisTemplate(RedisConnectionFactory factory)&#123;</span><br><span class="line"></span><br><span class="line">        // 创建 RedisTemplate 对象</span><br><span class="line">        RedisTemplate&lt;String, Object&gt; template = new RedisTemplate&lt;&gt;();</span><br><span class="line"></span><br><span class="line">        //设置 RedisConnection 工厂</span><br><span class="line">        template.setConnectionFactory(factory);</span><br><span class="line"></span><br><span class="line">        // 设置 Key 的序列化方式</span><br><span class="line">        template.setKeySerializer(RedisSerializer.string());</span><br><span class="line"></span><br><span class="line">        // 设置 Value 的序列化方式</span><br><span class="line">        template.setValueSerializer(RedisSerializer.json());</span><br><span class="line"></span><br><span class="line">        return template;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>RedisSerializer.string()</code> 静态方法，返回的就是使用 UTF-8 编码的 StringRedisSerializer 对象。代码如下:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">static RedisSerializer&lt;String&gt; string() &#123;</span><br><span class="line">        return StringRedisSerializer.UTF_8;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>RedisSerializer.json()</code> 静态方法，返回 GenericJackson2JsonRedisSerializer 对象。代码如下:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">static RedisSerializer&lt;Object&gt; json() &#123;</span><br><span class="line">        return new GenericJackson2JsonRedisSerializer();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>除了以上的Redis默认提供的序列化方法，我们也可以采用自定义的方式。请往后看！</p>
+<hr>
+<h3 id="自定义-RedisSerializer-实现类">自定义 RedisSerializer 实现类</h3>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">public class GenericFastJsonRedisSerializer implements RedisSerializer&lt;Object&gt; &#123;</span><br><span class="line"></span><br><span class="line">    private final static ParserConfig defaultRedisConfig = new ParserConfig();</span><br><span class="line">    static &#123; defaultRedisConfig.setAutoTypeSupport(true);&#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public byte[] serialize(Object o) throws SerializationException &#123;</span><br><span class="line">        // 空，直接返回空数组</span><br><span class="line">        if (o == null) &#123;</span><br><span class="line">            return new byte[0];</span><br><span class="line">        &#125;</span><br><span class="line">        try &#123;</span><br><span class="line">            // 使用 JSON 进行序列化成二进制数组，同时通过 SerializerFeature.WriteClassName 参数，声明写入类全名。</span><br><span class="line">            return JSON.toJSONBytes(o, SerializerFeature.WriteClassName);</span><br><span class="line">        &#125; catch (Exception ex) &#123;</span><br><span class="line">            throw new SerializationException(&quot;Could not serialize: &quot; + ex.getMessage(), ex);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Object deserialize(byte[] bytes) throws SerializationException &#123;</span><br><span class="line">        // 如果为空，则返回空对象</span><br><span class="line">        if (bytes == null || bytes.length == 0) &#123;</span><br><span class="line">            return null;</span><br><span class="line">        &#125;</span><br><span class="line">        try &#123;</span><br><span class="line">            // 使用 JSON 解析成对象。</span><br><span class="line">            return JSON.parseObject(new String(bytes, IOUtils.UTF8), Object.class, defaultRedisConfig);</span><br><span class="line">        &#125; catch (Exception ex) &#123;</span><br><span class="line">            throw new SerializationException(&quot;Could not deserialize: &quot; + ex.getMessage(), ex);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>定义好了我们自己的序列化类之后，我们就可以把之前配置类里面的Value换成我们自己的序列化方式了。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">template.setValueSerializer(new GenericFastJsonRedisSerializer());</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="缓存对象">缓存对象</h3>
+<p>我们在操作关系型数据库的时候，都会用一个实体对象去映射表数据。那我们现在使用 Redis 是否也需要这样呢？答案不言而喻，<br>
+一般都是这么干的：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">service # 业务逻辑层</span><br><span class="line">dao # 数据库访问层</span><br><span class="line">dataobject # PO</span><br><span class="line">cacheobject # CO</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><em>PO和CO一般都写在同一层里面，数据库访问层也当如此。（这里大家可根据具体情况自行考虑）</em></p>
+<h3 id="序列化实践">序列化实践</h3>
+<p>以上都做好了，我们来尝试一下我们自己的项目实践。首先定义一个CacheObject(UserCacheObject):</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">public class UserCacheObject &#123;</span><br><span class="line"></span><br><span class="line">    private Integer id;</span><br><span class="line"></span><br><span class="line">    private String name;</span><br><span class="line"></span><br><span class="line">    private String phone;</span><br><span class="line"></span><br><span class="line">    public Integer getId() &#123;</span><br><span class="line">        return id;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public UserCacheObject setId(Integer id) &#123;</span><br><span class="line">        this.id = id;</span><br><span class="line">        return this;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public String getName() &#123;</span><br><span class="line">        return name;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public UserCacheObject setName(String name) &#123;</span><br><span class="line">        this.name = name;</span><br><span class="line">        return this;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public String getPhone() &#123;</span><br><span class="line">        return phone;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public UserCacheObject setPhone(String phone) &#123;</span><br><span class="line">        this.phone = phone;</span><br><span class="line">        return this;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public String toString() &#123;</span><br><span class="line">        return &quot;UserCacheObject&#123;&quot; +</span><br><span class="line">                &quot;id=&quot; + id +</span><br><span class="line">                &quot;, name=&#x27;&quot; + name + &#x27;\&#x27;&#x27; +</span><br><span class="line">                &quot;, phone=&#x27;&quot; + phone + &#x27;\&#x27;&#x27; +</span><br><span class="line">                &#x27;&#125;&#x27;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接着来定义数据访问层：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">@Repository</span><br><span class="line">public class UserCacheDao &#123;</span><br><span class="line"></span><br><span class="line">    private static final String KEY_PATTERN = &quot;user:%d&quot;;</span><br><span class="line"></span><br><span class="line">    @Resource(name = &quot;redisTemplate&quot;)</span><br><span class="line">    @SuppressWarnings(&quot;SpringJavaInjectionPointsAutowiringInspection&quot;)</span><br><span class="line">    private ValueOperations&lt;String, String&gt; operations;</span><br><span class="line"></span><br><span class="line">    private static String buildKey(Integer id) &#123;</span><br><span class="line">        return String.format(KEY_PATTERN, id);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public UserCacheObject get(Integer id) &#123;</span><br><span class="line">        String key = buildKey(id);</span><br><span class="line">        String value = operations.get(key);</span><br><span class="line">        return JsonUtil.parseObject(value, UserCacheObject.class);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void set(Integer id, UserCacheObject object) &#123;</span><br><span class="line">        String key = buildKey(id);</span><br><span class="line">        String value = JsonUtil.toJSONString(object);</span><br><span class="line">        operations.set(key, value);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>KEY_PATTERN: 通过静态变量，声明 KEY 的前缀，并且使用冒号作为间隔<br>
+@Resource: 注入指定名字的 RedisTemplate 对应的 Operations 对象，这样明确每个 KEY 的类型。</p>
+<hr>
+<p>service层就不占用过多的篇幅了，接下来，我们写个测试类来测试一下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">@RunWith(SpringRunner.class)</span><br><span class="line">@SpringBootTest</span><br><span class="line">public class RedisTest &#123;</span><br><span class="line"></span><br><span class="line">    @Autowired</span><br><span class="line">    private UserCacheService cacheService;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    public void test1()&#123;</span><br><span class="line"></span><br><span class="line">        UserCacheObject object = new UserCacheObject();</span><br><span class="line">        object.setId(1);</span><br><span class="line">        object.setName(&quot;quweuyuan&quot;);</span><br><span class="line">        object.setPhone(&quot;18888888888&quot;);</span><br><span class="line"></span><br><span class="line">        cacheService.set(object.getId(),object);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    public void test2()&#123;</span><br><span class="line"></span><br><span class="line">        System.out.println(cacheService.get(1).toString());</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出结果：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UserCacheObject&#123;id=1, name=&#x27;quweuyuan&#x27;, phone=&#x27;18888888888&#x27;&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="总结">总结</h2>
+<p>本小节中，我们仔细研读了每个序列化方式，并且自定义了序列化实现类,下一小节中，我们来学习redis的数据结构！</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Yao</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://quweiyuan.github.io/2019/09/20/Springboot%E6%95%B4%E5%90%88%E7%AF%87%E2%80%94%E2%80%94Redis%EF%BC%88%E4%BA%8C%EF%BC%89/">https://quweiyuan.github.io/2019/09/20/Springboot%E6%95%B4%E5%90%88%E7%AF%87%E2%80%94%E2%80%94Redis%EF%BC%88%E4%BA%8C%EF%BC%89/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://quweiyuan.github.io" target="_blank">趣味源</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/NoSQL/">NoSQL</a><a class="post-meta__tags" href="/tags/Springboot/">Springboot</a></div><div class="post_share"><div class="social-share" data-image="/images/redis-xuliehua.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button button--animated"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/uploads/wechatpay.png" target="_blank"><img class="post-qr-code-img" src="/uploads/wechatpay.png" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="/uploads/alipay.png" target="_blank"><img class="post-qr-code-img" src="/uploads/alipay.png" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2019/09/22/Springboot%E6%95%B4%E5%90%88%E7%AF%87%E2%80%94%E2%80%94Redis%EF%BC%88%E4%B8%89%EF%BC%89/"><img class="prev-cover" src="/images/redis-jiegou.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Springboot整合篇——Redis（三）</div></div></a></div><div class="next-post pull-right"><a href="/2019/09/19/Springboot%E6%95%B4%E5%90%88%E7%AF%87%E2%80%94%E2%80%94Redis%EF%BC%88%E4%B8%80%EF%BC%89/"><img class="next-cover" src="/images/yudao-redis.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Springboot整合篇——Redis（一）</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2019/09/19/Springboot整合篇——Redis（一）/" title="Springboot整合篇——Redis（一）"><img class="cover" src="/images/yudao-redis.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2019-09-19</div><div class="title">Springboot整合篇——Redis（一）</div></div></a></div><div><a href="/2019/09/22/Springboot整合篇——Redis（三）/" title="Springboot整合篇——Redis（三）"><img class="cover" src="/images/redis-jiegou.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2019-09-22</div><div class="title">Springboot整合篇——Redis（三）</div></div></a></div><div><a href="/2021/03/15/谈谈过滤器的作用/" title="谈谈过滤器"><img class="cover" src="/images/filter_01.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-03-15</div><div class="title">谈谈过滤器</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/uploads/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Yao</div><div class="author-info__description"></div></div><div class="card-info-data"><div class="card-info-data-item is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">20</div></a></div><div class="card-info-data-item is-center"><a href="/tags/"><div class="headline">标签</div><div class="length-num">14</div></a></div><div class="card-info-data-item is-center"><a href="/categories/"><div class="headline">分类</div><div class="length-num">17</div></a></div></div><a class="button--animated" id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/quweiyuan"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/quweiyuan" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:yyp847029276@gmail.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn card-announcement-animation"></i><span>公告</span></div><div class="announcement_content">欢迎来到趣味源社区，在这里，跟随我一起成长，一起变强，一起Happy起来！</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">1.</span> <span class="toc-text">Redis序列化</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#RedisSerializer"><span class="toc-number">1.1.</span> <span class="toc-text">RedisSerializer</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#JDK-%E5%BA%8F%E5%88%97%E5%8C%96%E6%96%B9%E5%BC%8F"><span class="toc-number">1.1.1.</span> <span class="toc-text">JDK 序列化方式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#JdkSerializationRedisSerializer"><span class="toc-number">1.1.1.1.</span> <span class="toc-text">JdkSerializationRedisSerializer:</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#String-%E5%BA%8F%E5%88%97%E5%8C%96%E6%96%B9%E5%BC%8F"><span class="toc-number">1.1.2.</span> <span class="toc-text">String 序列化方式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#StringRedisSerializer"><span class="toc-number">1.1.2.1.</span> <span class="toc-text">StringRedisSerializer:</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#GenericToStringSerializer"><span class="toc-number">1.1.2.2.</span> <span class="toc-text">GenericToStringSerializer:</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#JSON-%E5%BA%8F%E5%88%97%E5%8C%96%E6%96%B9%E5%BC%8F"><span class="toc-number">1.1.3.</span> <span class="toc-text">JSON 序列化方式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Jackson2JsonRedisSerializer"><span class="toc-number">1.1.3.1.</span> <span class="toc-text">Jackson2JsonRedisSerializer:</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#FastJsonRedisSerializer"><span class="toc-number">1.1.3.2.</span> <span class="toc-text">FastJsonRedisSerializer:</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#GenericFastJsonRedisSerializer"><span class="toc-number">1.1.3.3.</span> <span class="toc-text">GenericFastJsonRedisSerializer:</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#GenericJackson2JsonRedisSerializer"><span class="toc-number">1.1.3.4.</span> <span class="toc-text">GenericJackson2JsonRedisSerializer:</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#XML-%E5%BA%8F%E5%88%97%E5%8C%96%E6%96%B9%E5%BC%8F"><span class="toc-number">1.1.4.</span> <span class="toc-text">XML 序列化方式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#OxmSerializer"><span class="toc-number">1.1.4.1.</span> <span class="toc-text">OxmSerializer:</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ByteArray-%E5%BA%8F%E5%88%97%E5%8C%96%E6%96%B9%E5%BC%8F"><span class="toc-number">1.1.5.</span> <span class="toc-text">ByteArray 序列化方式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#ByteArrayRedisSerializer"><span class="toc-number">1.1.5.1.</span> <span class="toc-text">ByteArrayRedisSerializer:</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8A%A8%E6%89%8B%E5%AE%9E%E8%B7%B5"><span class="toc-number">1.2.</span> <span class="toc-text">动手实践</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA-RedisConfiguration-%E9%85%8D%E7%BD%AE%E7%B1%BB"><span class="toc-number">1.2.1.</span> <span class="toc-text">创建 RedisConfiguration 配置类</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89-RedisSerializer-%E5%AE%9E%E7%8E%B0%E7%B1%BB"><span class="toc-number">1.2.2.</span> <span class="toc-text">自定义 RedisSerializer 实现类</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%93%E5%AD%98%E5%AF%B9%E8%B1%A1"><span class="toc-number">1.2.3.</span> <span class="toc-text">缓存对象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BA%8F%E5%88%97%E5%8C%96%E5%AE%9E%E8%B7%B5"><span class="toc-number">1.2.4.</span> <span class="toc-text">序列化实践</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">1.3.</span> <span class="toc-text">总结</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2021/04/01/SpringCloud%E5%85%A8%E5%AE%B6%E6%A1%B6%E4%B9%8B-Nacos/" title="SpringCloud全家桶之Nacos"><img src="/images/nacos.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="SpringCloud全家桶之Nacos"/></a><div class="content"><a class="title" href="/2021/04/01/SpringCloud%E5%85%A8%E5%AE%B6%E6%A1%B6%E4%B9%8B-Nacos/" title="SpringCloud全家桶之Nacos">SpringCloud全家桶之Nacos</a><time datetime="2021-04-01T13:39:58.000Z" title="发表于 2021-04-01 21:39:58">2021-04-01</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/03/15/%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2/" title="搭建个人博客"><img src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="搭建个人博客"/></a><div class="content"><a class="title" href="/2021/03/15/%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2/" title="搭建个人博客">搭建个人博客</a><time datetime="2021-03-15T01:57:38.000Z" title="发表于 2021-03-15 09:57:38">2021-03-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/03/15/%E8%B0%88%E8%B0%88%E8%BF%87%E6%BB%A4%E5%99%A8%E7%9A%84%E4%BD%9C%E7%94%A8/" title="谈谈过滤器"><img src="/images/filter_01.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="谈谈过滤器"/></a><div class="content"><a class="title" href="/2021/03/15/%E8%B0%88%E8%B0%88%E8%BF%87%E6%BB%A4%E5%99%A8%E7%9A%84%E4%BD%9C%E7%94%A8/" title="谈谈过滤器">谈谈过滤器</a><time datetime="2021-03-15T01:57:38.000Z" title="发表于 2021-03-15 09:57:38">2021-03-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2021/02/22/java%E7%9A%84%E6%B7%B1%E6%8B%B7%E8%B4%9D%E4%B8%8E%E6%B5%85%E6%8B%B7%E8%B4%9D/" title="java中的深拷贝与浅拷贝"><img src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="java中的深拷贝与浅拷贝"/></a><div class="content"><a class="title" href="/2021/02/22/java%E7%9A%84%E6%B7%B1%E6%8B%B7%E8%B4%9D%E4%B8%8E%E6%B5%85%E6%8B%B7%E8%B4%9D/" title="java中的深拷贝与浅拷贝">java中的深拷贝与浅拷贝</a><time datetime="2021-02-22T07:04:00.000Z" title="发表于 2021-02-22 15:04:00">2021-02-22</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2020/01/29/%E6%8E%92%E5%BA%8F%EF%BC%88%E4%B8%80%EF%BC%89%E2%80%94%E2%80%94%20%E5%BF%AB%E9%80%9F%E6%8E%92%E5%BA%8F/" title="排序（一）—— 快速排序"><img src="/images/paixu.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="排序（一）—— 快速排序"/></a><div class="content"><a class="title" href="/2020/01/29/%E6%8E%92%E5%BA%8F%EF%BC%88%E4%B8%80%EF%BC%89%E2%80%94%E2%80%94%20%E5%BF%AB%E9%80%9F%E6%8E%92%E5%BA%8F/" title="排序（一）—— 快速排序">排序（一）—— 快速排序</a><time datetime="2020-01-29T10:21:26.000Z" title="发表于 2020-01-29 18:21:26">2020-01-29</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('/images/redis-xuliehua.png')"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2021 By Yao</div><div class="footer_custom_text">Hi, welcome to my <a target="_blank" rel="noopener" href="https://butterfly.js.org/">blog</a>!</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">簡</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (false){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><script>var preloader = {
+  endLoading: () => {
+    document.body.style.overflow = 'auto';
+    document.getElementById('loading-box').classList.add("loaded")
+  },
+  initLoading: () => {
+    document.body.style.overflow = '';
+    document.getElementById('loading-box').classList.remove("loaded")
+
+  }
+}
+window.addEventListener('load',preloader.endLoading())</script><div class="js-pjax"><script>if (document.getElementsByClassName('mermaid').length) {
+  if (window.mermaidJsLoad) mermaid.init()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(() => {
+      window.mermaidJsLoad = true
+      mermaid.initialize({
+        theme: 'default',
+      })
+      true && mermaid.init()
+    })
+  }
+}</script><script>function loadValine () {
+  function initValine () {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: 'FTuVoYJYEGvRgKbQYSaaU3EA-gzGzoHsz',
+      appKey: 'HJp2uCDunv7DNEDsqgfkSoM6',
+      placeholder: '畅所欲言吧！',
+      avatar: 'monsterid',
+      meta: 'nick,mail,link'.split(','),
+      pageSize: '10',
+      lang: 'zh-CN',
+      recordIP: false,
+      serverURLs: '',
+      emojiCDN: '',
+      emojiMaps: "",
+      enableQQ: false,
+      path: window.location.pathname,
+      requiredFields: ["nick,mail"],
+      visitor: true
+    }, null))
+  }
+
+  if (typeof Valine === 'function') initValine() 
+  else getScript('https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js').then(initValine)
+}
+
+if ('Valine' === 'Valine' || !false) {
+  if (false) btf.loadComment(document.getElementById('vcomment'),loadValine)
+  else setTimeout(loadValine, 0)
+} else {
+  function loadOtherComment () {
+    loadValine()
+  }
+}</script></div><script src="https://cdn.jsdelivr.net/npm/blueimp-md5@2.17.0/js/md5.min.js"></script><script>window.addEventListener('load', () => {
+  const changeContent = (content) => {
+    if (content === '') return content
+
+    content = content.replace(/<img.*?src="(.*?)"?[^\>]+>/ig, '[图片]') // replace image link
+    content = content.replace(/<a[^>]+?href=["']?([^"']+)["']?[^>]*>([^<]+)<\/a>/gi, '[链接]') // replace url
+    content = content.replace(/<pre><code>.*?<\/pre>/gi, '[代码]') // replace code
+    content = content.replace(/<[^>]+>/g,"") // remove html tag
+
+    if (content.length > 150) {
+      content = content.substring(0,150) + '...'
+    }
+    return content
+  }
+
+  const getIcon = (icon, mail) => {
+    if (icon) return icon
+    let defaultIcon = '?d=monsterid'
+    let iconUrl = `https://gravatar.loli.net/avatar/${md5(mail.toLowerCase()) + defaultIcon}`
+    return iconUrl
+  }
+
+  const generateHtml = array => {
+    let result = ''
+
+    if (array.length) {
+      for (let i = 0; i < array.length; i++) {
+        result += '<div class=\'aside-list-item\'>'
+
+        if (true) {
+          const name = 'src'
+          result += `<a href='${array[i].url}' class='thumbnail'><img ${name}='${array[i].avatar}' alt='${array[i].nick}'></a>`
+        }
+
+        result += `<div class='content'>
+        <a class='comment' href='${array[i].url}'>${array[i].content}</a>
+        <div class='name'><span>${array[i].nick} / </span><time datetime="${array[i].date}">${btf.diffDate(array[i].date, true)}</time></div>
+        </div></div>`
+      }
+    } else {
+      result += '没有评论'
+    }
+
+    let $dom = document.querySelector('#card-newest-comments .aside-list')
+    $dom.innerHTML= result
+    window.lazyLoadInstance && window.lazyLoadInstance.update()
+    window.pjax && window.pjax.refresh($dom)
+  }
+
+  const getComment = () => {
+    const serverURL = 'https://FTuVoYJY.api.lncldglobal.com'
+
+    var settings = {
+      "method": "GET",
+      "headers": {
+        "X-LC-Id": 'FTuVoYJYEGvRgKbQYSaaU3EA-gzGzoHsz',
+        "X-LC-Key": 'HJp2uCDunv7DNEDsqgfkSoM6',
+        "Content-Type": "application/json"
+      },
+    }
+
+    fetch(`${serverURL}/1.1/classes/Comment?limit=6&order=-createdAt`,settings)
+      .then(response => response.json())
+      .then(data => {
+        const valineArray = data.results.map(function (e) {
+          return {
+            'avatar': getIcon(e.QQAvatar, e.mail),
+            'content': changeContent(e.comment),
+            'nick': e.nick,
+            'url': e.url + '#' + e.objectId,
+            'date': e.updatedAt,
+          }
+        })
+        saveToLocal.set('valine-newest-comments', JSON.stringify(valineArray), 10/(60*24))
+        generateHtml(valineArray)
+      }).catch(e => {
+        const $dom = document.querySelector('#card-newest-comments .aside-list')
+        $dom.innerHTML= "无法获取评论，请确认相关配置是否正确"
+      }) 
+  }
+
+  const newestCommentInit = () => {
+    if (document.querySelector('#card-newest-comments .aside-list')) {
+      const data = saveToLocal.get('valine-newest-comments')
+      if (data) {
+        generateHtml(JSON.parse(data))
+      } else {
+        getComment()
+      }
+    }
+  }
+
+  newestCommentInit()
+  document.addEventListener('pjax:complete', newestCommentInit)
+})</script><script defer="defer" id="ribbon" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/canvas-ribbon.min.js" size="150" alpha="0.6" zIndex="-1" mobile="true" data-click="true"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = true;
+POWERMODE.mobile = true;
+document.body.addEventListener('input', POWERMODE);
+</script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config-diff',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"]):not([href="/music/"]):not([href="/no-pjax/"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener toc scroll 
+  window.removeEventListener('scroll', window.tocScrollFn)
+
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
